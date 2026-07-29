@@ -32,6 +32,15 @@ codex exec --ephemeral - < .tmp/codex-task.md
 
 Capture output to a file — `-o <FILE>` for the final message, or `> out.txt 2>&1` for the full combined stdout+stderr stream — and extract from it afterwards. Never pipe `codex exec` into `head` or another early-exiting reader: the final answer prints after the prompt echo and exec logs, so a head-window shows only preamble, and the reader's early exit closes the pipe, causing subsequent CLI writes to fail with `EPIPE` — the streamed output may be incomplete. A non-`--ephemeral` session's rollout under `~/.codex/sessions/YYYY/MM/DD/rollout-*.jsonl` retains the run if streamed output is lost.
 
+Launch each invocation through exactly one process-lifecycle mechanism. When the host shell/exec tool
+already returns a session id and allows polling, run `codex exec` in the foreground of that session: do
+not append `&`, add `nohup`, or wrap it in a second background layer. One invocation must have one exit
+status, one output file, and one measured start/end pair.
+
+For repeated audit or benchmark calls, add `--json`, retain the JSONL event stream and `-o` final answer,
+and record the prompt hash/bytes, invocation id, exit status, model-reported tokens when present, and
+elapsed wall time per call. Use those measurements in the audit record; do not infer cost from round count.
+
 Useful flags:
 
 - `--ephemeral`: do not persist the one-shot session.
